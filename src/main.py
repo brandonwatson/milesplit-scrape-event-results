@@ -10,6 +10,12 @@ from playwright.sync_api import sync_playwright
 import time
 from datetime import date
 
+#TODOS:
+# - add a dict look up to get from "LJ" to "Long Jump" and so on for all events for --stateranks code path
+# - remove "Finals" from event names when getting the data (before it get's to CSV)
+# - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
+# - test running with a sleep=.1 and not .25
+
 # Define the event types structure
 EVENT_TYPES = {
     "all": [
@@ -422,7 +428,16 @@ def get_state_ranks(target_school, username, password, year, league):
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                 print(f"Created new state rankings file: {output_path}")
-
+            
+            # Create state qualifying marks file
+            qual_marks_file = f"State Meet Mark Requirements {today}.csv"
+            qual_marks_path = os.path.join('results', qual_marks_file)
+            
+            # Create the qualifying marks CSV file with headers
+            with open(qual_marks_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Event', 'Gender', 'Rank', 'Mark'])
+            print(f"Created state qualifying marks file: {qual_marks_path}")
             
             # Process boys and girls rankings
             for gender in ["girls", "boys"]:
@@ -457,6 +472,10 @@ def get_state_ranks(target_school, username, password, year, league):
                     page_num = 1
                     has_more_pages = True
                     
+                    # For qualifying marks tracking
+                    top_mark = {'rank': None, 'mark': None}
+                    last_qualifying_mark = {'rank': None, 'mark': None}
+                    
                     while has_more_pages:
                         print(f"Processing page {page_num} for {gender_proper} {event_name}")
                         
@@ -490,7 +509,61 @@ def get_state_ranks(target_school, username, password, year, league):
                         
                         print(f"Found {len(rows)} rows")
                         
-                        # Process each row
+                        # Capture qualifying marks on first page
+                        if page_num == 1:
+                            # Process state qualifying marks
+                            for row in rows:
+                                rank_td = row.select_one('td.rank')
+                                if not rank_td:
+                                    continue
+                                
+                                try:
+                                    rank = int(rank_td.text.strip())
+                                except (ValueError, TypeError):
+                                    continue  # Skip if rank is not a valid integer
+                                
+                                time_td = row.select_one('td.time')
+                                mark = time_td.text.strip() if time_td else ""
+                                
+                                if not mark:
+                                    continue
+                                
+                                # Update top mark (rank 1)
+                                if rank == 1:
+                                    top_mark = {'rank': 1, 'mark': mark}
+                                
+                                # Update last qualifying mark (closest to 18 without going over)
+                                if rank <= 18:
+                                    last_qualifying_mark = {'rank': rank, 'mark': mark}
+                            
+                            # Write qualifying marks to CSV after processing first page
+                            with open(qual_marks_path, 'a', newline='', encoding='utf-8') as csvfile:
+                                writer = csv.writer(csvfile)
+                                
+                                # Write top mark (rank 1)
+                                if top_mark['rank'] is not None:
+                                    writer.writerow([
+                                        event_name, 
+                                        gender_proper, 
+                                        top_mark['rank'], 
+                                        top_mark['mark']
+                                    ])
+                                    print(f"Added top mark (rank 1) for {gender_proper} {event_name}: {top_mark['mark']}")
+                                
+                                # Write last qualifying mark (closest to 18 without going over)
+                                if last_qualifying_mark['rank'] is not None and last_qualifying_mark['rank'] != 1:
+                                    writer.writerow([
+                                        event_name, 
+                                        gender_proper, 
+                                        last_qualifying_mark['rank'], 
+                                        last_qualifying_mark['mark']
+                                    ])
+                                    print(f"Added last qualifying mark (rank {last_qualifying_mark['rank']}) for {gender_proper} {event_name}: {last_qualifying_mark['mark']}")
+                                
+                                if top_mark['rank'] is None and last_qualifying_mark['rank'] is None:
+                                    print(f"No qualifying marks found for {gender_proper} {event_name}")
+                        
+                        # Process each row for school results
                         for row in rows:
                             # Check if the team is our target school
                             team_div = row.select_one('td.name div.team')
