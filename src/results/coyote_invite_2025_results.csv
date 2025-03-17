@@ -1,55 +1,55 @@
-meet_name,event,gender,athlete_name,place,mark
-coyote invite 2025,100 Meter Dash,M,Teagan Trasky,5,11.35
-coyote invite 2025,100 Meter Dash,M,Satendraa Elangovan Jayalakshmi,24,12.10
-coyote invite 2025,100 Meter Dash,M,Jack Krupey,28,12.17
-coyote invite 2025,100 Meter Dash,M,Austin Ringgold,41,12.42
-coyote invite 2025,100 Meter Dash,M,Aditya Sahane,56,12.88
-coyote invite 2025,200 Meter Dash,M,Teagan Trasky,4,23.27
-coyote invite 2025,200 Meter Dash,M,Jack Krupey,14,24.64
-coyote invite 2025,200 Meter Dash,M,Satendraa Elangovan Jayalakshmi,19,24.73
-coyote invite 2025,200 Meter Dash,M,Austin Ringgold,29,25.08
-coyote invite 2025,200 Meter Dash,M,Santiago Spamer,42,25.91
-coyote invite 2025,400 Meter Dash,M,Teagan Trasky,1,51.64
-coyote invite 2025,400 Meter Dash,M,Jack Krupey,4,54.80
-coyote invite 2025,400 Meter Dash,M,Austin Ringgold,5,54.97
-coyote invite 2025,800 Meter Run,M,Emory Vazquez,3,2:04.74
-coyote invite 2025,800 Meter Run,M,Jack Cerullo,7,2:09.02
-coyote invite 2025,800 Meter Run,M,Rohit Movva,34,2:25.15
-coyote invite 2025,800 Meter Run,M,Asher Szott,46,2:54.10
-coyote invite 2025,1600 Meter Run,M,Nicholas Griffin,40,5:21.29
-coyote invite 2025,1600 Meter Run,M,Christopher DiMaio,46,5:28.53
-coyote invite 2025,1600 Meter Run,M,Olin Harrison Anguiano,47,5:29.53
-coyote invite 2025,3200 Meter Run,M,Pierce Ross,19,11:27.79
-coyote invite 2025,3200 Meter Run,M,Jack Cerullo,20,11:29.28
-coyote invite 2025,110 Meter Hurdles,M,Gavin Flanagan,15,20.61
-coyote invite 2025,110 Meter Hurdles,M,Pavel Trofimovsky,17,21.19
-coyote invite 2025,300 Meter Hurdles,M,Gavin Flanagan,15,48.50
-coyote invite 2025,300 Meter Hurdles,M,Pavel Trofimovsky,16,48.52
-coyote invite 2025,Long Jump,M,Levi Hartter,24,16-4.5
-coyote invite 2025,Long Jump,M,Kia Hosseini,27,16-2.75
-coyote invite 2025,Long Jump,M,Tristan Townsend,29,16-1
-coyote invite 2025,Pole Vault,M,Ethan Rathke,1,15-2
-coyote invite 2025,Pole Vault,M,Gavin Flanagan,5,11-8
-coyote invite 2025,Discus,M,Jack Krupey,6,112-7
-coyote invite 2025,Discus,M,Aidan Krusinski,7,109-4
-coyote invite 2025,Discus,M,Donivan De Los Santos,34,58-10
-coyote invite 2025,Discus,M,Jake Taylor,36,55-5
-coyote invite 2025,Shot Put,M,Aidan Krusinski,15,36-11
-coyote invite 2025,Shot Put,M,Elangovan Jayalaks,33,28-7
-coyote invite 2025,Shot Put,M,Donivan De Los Santos,42,25-10.5
-coyote invite 2025,100 Meter Dash,F,Chelsey Streifel,10,13.47
-coyote invite 2025,100 Meter Dash,F,Riley Watson,19,14.03
-coyote invite 2025,100 Meter Dash,F,Hana Cook,39,14.69
-coyote invite 2025,100 Meter Dash,F,Sydney Cusack,42,14.94
-coyote invite 2025,800 Meter Run,F,Kiele Maunakea,21,2:53.39
-coyote invite 2025,800 Meter Run,F,Stella Carter,31,3:01.85
-coyote invite 2025,800 Meter Run,F,Sophie Walker,35,3:08.75
-coyote invite 2025,800 Meter Run,F,Jocelyn Fiegland,40,3:28.29
-coyote invite 2025,100 Meter Hurdles,F,Lael Lee,18,23.16
-coyote invite 2025,300 Meter Hurdles,F,Lael Lee,16,1:01.97
-coyote invite 2025,Long Jump,F,Hana Cook,3,15-4
-coyote invite 2025,Long Jump,F,Sydney Cusack,14,13-10.5
-coyote invite 2025,Pole Vault,F,Chelsey Streifel,4,8-8
-coyote invite 2025,Shot Put,F,Riley Watson,3,26-2.5
-coyote invite 2025,Discus,F,Riley Watson,2,88-5
-coyote invite 2025,Discus,F,Sydney Cusack,9,64-0
+meet_name,event,place,athlete_name,gender,mark
+coyote invite 2025,100 Meter Dash Finals,5,Teagan Trasky,Boys,11.35
+coyote invite 2025,100 Meter Dash Finals,24,Satendraa Elangovan Jayalakshmi,Boys,12.10
+coyote invite 2025,100 Meter Dash Finals,28,Jack Krupey,Boys,12.17
+coyote invite 2025,100 Meter Dash Finals,41,Austin Ringgold,Boys,12.42
+coyote invite 2025,100 Meter Dash Finals,56,Aditya Sahane,Boys,12.88
+coyote invite 2025,200 Meter Dash Finals,4,Teagan Trasky,Boys,23.27
+coyote invite 2025,200 Meter Dash Finals,14,Jack Krupey,Boys,24.64
+coyote invite 2025,200 Meter Dash Finals,19,Satendraa Elangovan Jayalakshmi,Boys,24.73
+coyote invite 2025,200 Meter Dash Finals,29,Austin Ringgold,Boys,25.08
+coyote invite 2025,200 Meter Dash Finals,42,Santiago Spamer,Boys,25.91
+coyote invite 2025,400 Meter Dash Finals,1,Teagan Trasky,Boys,51.64
+coyote invite 2025,400 Meter Dash Finals,4,Jack Krupey,Boys,54.80
+coyote invite 2025,400 Meter Dash Finals,5,Austin Ringgold,Boys,54.97
+coyote invite 2025,800 Meter Run Finals,3,Emory Vazquez,Boys,2:04.74
+coyote invite 2025,800 Meter Run Finals,7,Jack Cerullo,Boys,2:09.02
+coyote invite 2025,800 Meter Run Finals,34,Rohit Movva,Boys,2:25.15
+coyote invite 2025,800 Meter Run Finals,46,Asher Szott,Boys,2:54.10
+coyote invite 2025,1600 Meter Run Finals,40,Nicholas Griffin,Boys,5:21.29
+coyote invite 2025,1600 Meter Run Finals,46,Christopher DiMaio,Boys,5:28.53
+coyote invite 2025,1600 Meter Run Finals,47,Olin Harrison Anguiano,Boys,5:29.53
+coyote invite 2025,3200 Meter Run Finals,19,Pierce Ross,Boys,11:27.79
+coyote invite 2025,3200 Meter Run Finals,20,Jack Cerullo,Boys,11:29.28
+coyote invite 2025,110 Meter Hurdles Finals,15,Gavin Flanagan,Boys,20.61
+coyote invite 2025,110 Meter Hurdles Finals,17,Pavel Trofimovsky,Boys,21.19
+coyote invite 2025,300 Meter Hurdles Finals,15,Gavin Flanagan,Boys,48.50
+coyote invite 2025,300 Meter Hurdles Finals,16,Pavel Trofimovsky,Boys,48.52
+coyote invite 2025,Long Jump Finals,24,Levi Hartter,Boys,16-4.5
+coyote invite 2025,Long Jump Finals,27,Kia Hosseini,Boys,16-2.75
+coyote invite 2025,Long Jump Finals,29,Tristan Townsend,Boys,16-1
+coyote invite 2025,Pole Vault Finals,1,Ethan Rathke,Boys,15-2
+coyote invite 2025,Pole Vault Finals,5,Gavin Flanagan,Boys,11-8
+coyote invite 2025,Discus Finals,6,Jack Krupey,Boys,112-7
+coyote invite 2025,Discus Finals,7,Aidan Krusinski,Boys,109-4
+coyote invite 2025,Discus Finals,34,Donivan De Los Santos,Boys,58-10
+coyote invite 2025,Discus Finals,36,Jake Taylor,Boys,55-5
+coyote invite 2025,Shot Put Finals,15,Aidan Krusinski,Boys,36-11
+coyote invite 2025,Shot Put Finals,33,Elangovan Jayalaks,Boys,28-7
+coyote invite 2025,Shot Put Finals,42,Donivan De Los Santos,Boys,25-10.5
+coyote invite 2025,100 Meter Dash Finals,10,Chelsey Streifel,Girls,13.47
+coyote invite 2025,100 Meter Dash Finals,19,Riley Watson,Girls,14.03
+coyote invite 2025,100 Meter Dash Finals,39,Hana Cook,Girls,14.69
+coyote invite 2025,100 Meter Dash Finals,42,Sydney Cusack,Girls,14.94
+coyote invite 2025,800 Meter Run Finals,21,Kiele Maunakea,Girls,2:53.39
+coyote invite 2025,800 Meter Run Finals,31,Stella Carter,Girls,3:01.85
+coyote invite 2025,800 Meter Run Finals,35,Sophie Walker,Girls,3:08.75
+coyote invite 2025,800 Meter Run Finals,40,Jocelyn Fiegland,Girls,3:28.29
+coyote invite 2025,100 Meter Hurdles Finals,18,Lael Lee,Girls,23.16
+coyote invite 2025,300 Meter Hurdles Finals,16,Lael Lee,Girls,1:01.97
+coyote invite 2025,Long Jump Finals,3,Hana Cook,Girls,15-4
+coyote invite 2025,Long Jump Finals,14,Sydney Cusack,Girls,13-10.5
+coyote invite 2025,Pole Vault Finals,4,Chelsey Streifel,Girls,8-8
+coyote invite 2025,Shot Put Finals,3,Riley Watson,Girls,26-2.5
+coyote invite 2025,Discus Finals,2,Riley Watson,Girls,88-5
+coyote invite 2025,Discus Finals,9,Sydney Cusack,Girls,64-0
