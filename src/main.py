@@ -12,6 +12,7 @@ from datetime import date
 
 #TODOS:
 # - add a dict look up to get from "LJ" to "Long Jump" and so on for all events for --stateranks code path
+# - add "date pulled" to the State Meet Mark Requirements CSV
 # - remove "Finals" from event names when getting the data (before it get's to CSV)
 # - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
 # - test running with a sleep=.1 and not .25
