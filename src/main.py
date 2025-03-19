@@ -15,7 +15,10 @@ from datetime import date
 # - add "date pulled" to the State Meet Mark Requirements CSV
 # - remove "Finals" from event names when getting the data (before it get's to CSV)
 # - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
+
+# EXPERIMENT BEING RUN
 # - test running with a sleep=.1 and not .25
+
 
 # Define the event types structure
 EVENT_TYPES = {
@@ -482,7 +485,7 @@ def get_state_ranks(target_school, username, password, year, league):
                         
                         # Respect rate limits
                         if page_num > 1:
-                            time.sleep(0.25)  # Wait 250ms between pages to avoid ban
+                            time.sleep(0.1)  # Wait 250ms between pages to avoid ban
                         
                         # Navigate to the page
                         content = navigate_to_page_and_get_content(context, event_url)
@@ -676,7 +679,7 @@ def main():
     password = os.getenv("PASSWORD")
     target_school = os.getenv("TARGET_SCHOOL", "Peak to Peak Charter School")  # Default if not set
     year = os.getenv("YEAR", "2025")  # Default if not set
-    league = os.getenv("LEAGUE", "8691")  # Default if not set
+    league = os.getenv("LEAGUE", "9123")  # Default if not set; previously had 8691 as the league
     
     if not username or not password:
         print("Error: USERNAME and PASSWORD must be set in .env file")
