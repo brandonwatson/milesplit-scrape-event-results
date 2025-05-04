@@ -11,8 +11,7 @@ import time
 from datetime import date
 
 #TODOS:
-# - add a dict look up to get from "LJ" to "Long Jump" and so on for all events for --stateranks code path
-# - add "date pulled" to the State Meet Mark Requirements CSV
+# - add "date pulled" to the State Meet Mark Requirements CSV - FIXED
 # - remove "Finals" from event names when getting the data (before it get's to CSV)
 # - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
 
@@ -20,29 +19,27 @@ from datetime import date
 # - test running with a sleep=.1 and not .25
 
 
-# Define the event types structure
+# Define the event types structure with dictionary for long names
 EVENT_TYPES = {
-    "all": [
-        "100m",
-        "200m",
-        "400m",
-        "300H",
-        "800m",
-        "1600m",
-        "3200m",
-        "D",
-        "S",
-        "HJ",
-        "TJ",
-        "LJ",
-        "PV",
-        "4x100m",
-        "4x200m",
-        "4x400m",
-        "4x800m"
-    ],
-    "boysonly": ["110H"],
-    "girlsonly": ["100H"]
+    "100m": {"long_name": "100 Meter Dash Finals", "female_event": True, "male_event": True},
+    "200m": {"long_name": "200 Meter Dash Finals", "female_event": True, "male_event": True},
+    "400m": {"long_name": "400 Meter Dash Finals", "female_event": True, "male_event": True},
+    "300H": {"long_name": "300 Meter Hurdles Finals", "female_event": True, "male_event": True},
+    "800m": {"long_name": "800 Meter Run Finals", "female_event": True, "male_event": True},
+    "1600m": {"long_name": "1600 Meter Run Finals", "female_event": True, "male_event": True},
+    "3200m": {"long_name": "3200 Meter Run Finals", "female_event": True, "male_event": True},
+    "D": {"long_name": "Discus Finals", "female_event": True, "male_event": True},
+    "S": {"long_name": "Shot Put Finals", "female_event": True, "male_event": True},
+    "HJ": {"long_name": "High Jump Finals", "female_event": True, "male_event": True},
+    "TJ": {"long_name": "Triple Jump Finals", "female_event": True, "male_event": True},
+    "LJ": {"long_name": "Long Jump Finals", "female_event": True, "male_event": True},
+    "PV": {"long_name": "Pole Vault Finals", "female_event": True, "male_event": True},
+    "4x100m": {"long_name": "4x100 Meter Relay", "female_event": True, "male_event": True},
+    "4x200m": {"long_name": "4x200 Meter Relay", "female_event": True, "male_event": True},
+    "4x400m": {"long_name": "4x400 Meter Relay", "female_event": True, "male_event": True},
+    "4x800m": {"long_name": "4x800 Meter Relay", "female_event": True, "male_event": True},
+    "110H": {"long_name": "110 Meter Hurdles Finals", "female_event": False, "male_event": True},
+    "100H": {"long_name": "100 Meter Hurdles Finals", "female_event": True, "male_event": False}
 }
 
 def extract_meet_name(url):
@@ -56,9 +53,12 @@ def extract_meet_name(url):
     return "Unknown Meet"
 
 def standardize_url(url):
-    match = re.search(r'/meets/(\d+)(?:-[^/]+)?/results', url)
+    """Standardize the URL format but preserve any path components after 'results/'."""
+    match = re.search(r'/meets/(\d+)(?:-[^/]+)?/results(.*)', url)
     if match:
-        return f"https://co.milesplit.com/meets/{match.group(1)}/results"
+        meet_id = match.group(1)
+        results_suffix = match.group(2) or ""  # The part after "results" (might be empty)
+        return f"https://co.milesplit.com/meets/{meet_id}/results{results_suffix}"
     return url
 
 def login_with_playwright(playwright, username, password):
@@ -73,7 +73,9 @@ def login_with_playwright(playwright, username, password):
     try:
         # First navigate to the main site to establish cookies
         print("Navigating to main site first...")
-        page.goto('https://co.milesplit.com/', wait_until="domcontentloaded", timeout=30000)
+        page.goto('https://co.milesplit.com/', wait_until="dom" \
+        "content" \
+        "loaded", timeout=30000)
         
         # Navigate to the login page
         print("Navigating to login page...")
@@ -440,7 +442,7 @@ def get_state_ranks(target_school, username, password, year, league):
             # Create the qualifying marks CSV file with headers
             with open(qual_marks_path, 'w', newline='', encoding='utf-8') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(['Event', 'Gender', 'Rank', 'Mark'])
+                writer.writerow(['Event', 'Gender', 'Rank', 'Mark', 'DatePulled'])
             print(f"Created state qualifying marks file: {qual_marks_path}")
             
             # Process boys and girls rankings
@@ -451,22 +453,26 @@ def get_state_ranks(target_school, username, password, year, league):
                 base_url = f"https://co.milesplit.com/rankings/events/high-school-{gender}/outdoor-track-and-field"
                 
                 # Get appropriate events for this gender
-                events = EVENT_TYPES["all"][:]  # Start with events for all genders
+                events = []
                 
-                # Add gender-specific events
-                if gender == "boys":
-                    events.extend(EVENT_TYPES["boysonly"])
-                elif gender == "girls":
-                    events.extend(EVENT_TYPES["girlsonly"])
+                # Add events based on gender
+                for event_short, event_info in EVENT_TYPES.items():
+                    if gender == "boys" and event_info["male_event"]:
+                        events.append(event_short)
+                    elif gender == "girls" and event_info["female_event"]:
+                        events.append(event_short)
                 
                 print(f"Processing {len(events)} events for {gender_proper}")
                 
                 # Process each event
-                for event_name in events:
-                    print(f"Processing event: {event_name}")
+                for event_short in events:
+                    print(f"Processing event: {event_short}")
+                    
+                    # Get the long name for this event
+                    event_long_name = EVENT_TYPES[event_short]["long_name"]
                     
                     # Construct the full URL
-                    event_url = f"{base_url}/{event_name}?year={year}&accuracy=fat&league={league}"
+                    event_url = f"{base_url}/{event_short}?year={year}&accuracy=fat&league={league}"
                     print(f"URL: {event_url}")
                     
                     # Store results for this event
@@ -481,11 +487,11 @@ def get_state_ranks(target_school, username, password, year, league):
                     last_qualifying_mark = {'rank': None, 'mark': None}
                     
                     while has_more_pages:
-                        print(f"Processing page {page_num} for {gender_proper} {event_name}")
+                        print(f"Processing page {page_num} for {gender_proper} {event_short}")
                         
                         # Respect rate limits
                         if page_num > 1:
-                            time.sleep(0.1)  # Wait 250ms between pages to avoid ban
+                            time.sleep(0.1)  # Wait 100ms between pages to avoid ban
                         
                         # Navigate to the page
                         content = navigate_to_page_and_get_content(context, event_url)
@@ -501,14 +507,14 @@ def get_state_ranks(target_school, username, password, year, league):
                         data_div = soup.select_one('div.data')
                         
                         if not data_div:
-                            print(f"No data div found for {event_name}")
+                            print(f"No data div found for {event_short}")
                             break
                         
                         # Find all rows in the tbody
                         rows = data_div.select('tbody tr')
                         
                         if not rows:
-                            print(f"No rows found for {event_name}")
+                            print(f"No rows found for {event_short}")
                             break
                         
                         print(f"Found {len(rows)} rows")
@@ -547,25 +553,27 @@ def get_state_ranks(target_school, username, password, year, league):
                                 # Write top mark (rank 1)
                                 if top_mark['rank'] is not None:
                                     writer.writerow([
-                                        event_name, 
+                                        event_long_name, 
                                         gender_proper, 
                                         top_mark['rank'], 
-                                        top_mark['mark']
+                                        top_mark['mark'],
+                                        today
                                     ])
-                                    print(f"Added top mark (rank 1) for {gender_proper} {event_name}: {top_mark['mark']}")
+                                    print(f"Added top mark (rank 1) for {gender_proper} {event_long_name}: {top_mark['mark']}")
                                 
                                 # Write last qualifying mark (closest to 18 without going over)
                                 if last_qualifying_mark['rank'] is not None and last_qualifying_mark['rank'] != 1:
                                     writer.writerow([
-                                        event_name, 
+                                        event_long_name, 
                                         gender_proper, 
                                         last_qualifying_mark['rank'], 
-                                        last_qualifying_mark['mark']
+                                        last_qualifying_mark['mark'],
+                                        today
                                     ])
-                                    print(f"Added last qualifying mark (rank {last_qualifying_mark['rank']}) for {gender_proper} {event_name}: {last_qualifying_mark['mark']}")
+                                    print(f"Added last qualifying mark (rank {last_qualifying_mark['rank']}) for {gender_proper} {event_long_name}: {last_qualifying_mark['mark']}")
                                 
                                 if top_mark['rank'] is None and last_qualifying_mark['rank'] is None:
-                                    print(f"No qualifying marks found for {gender_proper} {event_name}")
+                                    print(f"No qualifying marks found for {gender_proper} {event_long_name}")
                         
                         # Process each row for school results
                         for row in rows:
@@ -617,7 +625,7 @@ def get_state_ranks(target_school, username, password, year, league):
                             
                             # Add result to the list
                             result = {
-                                'Event': event_name,
+                                'Event': event_long_name,
                                 'Gender': gender_proper,
                                 'Athlete': athlete_name,
                                 'Mark': mark,
@@ -649,9 +657,9 @@ def get_state_ranks(target_school, username, password, year, league):
                             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                             for result in event_results:
                                 writer.writerow(result)
-                        print(f"Appended {len(event_results)} results for {gender_proper} {event_name} to {output_path}")
+                        print(f"Appended {len(event_results)} results for {gender_proper} {event_long_name} to {output_path}")
                     else:
-                        print(f"No results found for {gender_proper} {event_name}")
+                        print(f"No results found for {gender_proper} {event_long_name}")
             
             # Final stats
             print(f"Completed state rankings scan. Total results: {len(all_results)}")
