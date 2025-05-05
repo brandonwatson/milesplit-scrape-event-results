@@ -11,13 +11,45 @@ import time
 from datetime import date
 
 #TODOS:
-# - add "date pulled" to the State Meet Mark Requirements CSV - FIXED
-# - remove "Finals" from event names when getting the data (before it get's to CSV)
-# - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
+# 
 
 # EXPERIMENT BEING RUN
-# - test running with a sleep=.1 and not .25
+# 
 
+# Define the tracked `Panic Index` track meets
+PANIC_INDEX_MEETS = {
+    "Cardinal Inivtational" : "https://co.milesplit.com/meets/652527-cardinal-invitational-2025",
+    "Strasburg Dave Spiller" : "https://co.milesplit.com/meets/654034-strasburg-dave-spiller-invitational-postponed-to-may-5-2025",
+    "Centauri Invitational 2025" : "https://co.milesplit.com/meets/654392-centauri-invitational-canceled-2025",
+    "Spartan Last Chance Qualifier" : "https://co.milesplit.com/meets/636625-spartan-last-chance-qualifier-2025",
+    "Delta Twighlight 2025" : "https://co.milesplit.com/meets/660142-delta-twilight-2025",
+    "Monte Vista Last Chance" : "https://co.milesplit.com/meets/652252-2025-monte-vista-last-chance-invitational-2025",
+    "Friday Night Lights" : "https://co.milesplit.com/meets/636094-friday-night-lights-2025",
+    "Hoka St Vrain" : "https://co.milesplit.com/meets/651208-hoka-st-vrain-invitational-2025",
+    "Joe Shields Invitational" : "https://co.milesplit.com/meets/651085-joe-shields-invitational-2025",
+    "Trojan Horse Invite" : "https://co.milesplit.com/meets/654965-trojan-horse-invite-sneak-into-the-state-meet-2025",
+    "Windjammer Track Classic" : "https://co.milesplit.com/meets/649954-windjammer-track-classic-2025",
+    "Maxine Erhmann Thornton" : "https://co.milesplit.com/meets/646969-maxine-erhmann-thornton-invite-2025",
+    "Montrose Invitational" : "https://co.milesplit.com/meets/651090-montrose-invitational-2025",
+    "Rumble on the Divide" : "https://co.milesplit.com/meets/680880-rumble-on-the-divide-2025",
+    "Teddy's Last Chance" : "https://co.milesplit.com/meets/638820-teddys-last-chance-qualifier-2025"
+}
+
+PANIC_INDEX_EVENTS = [
+    "Girls LJ",
+    "Girls TJ",
+    "Girls D",
+    "Girls S",
+    "Girls PV",
+    "Girls 4x200m",
+    "Boys D",
+    "Boys LJ",
+    "Boys PV",
+    "Boys 200m",
+    "Boys 400m",
+    "Boys 4x200m",
+    "Boys 4x400m",
+]
 
 # Define the event types structure with dictionary for long names
 EVENT_TYPES = {
@@ -668,6 +700,298 @@ def get_state_ranks(target_school, username, password, year, league):
         finally:
             browser.close()
 
+def get_panic_index_athlete_participation(username, password, year, league):
+    """Get athlete participation data for the panic index meets."""
+    print("Getting panic index athlete participation data...")
+    
+    with sync_playwright() as playwright:
+        # Login with Playwright
+        login_result = login_with_playwright(playwright, username, password)
+        if not login_result:
+            print("Failed to login for panic index athlete participation")
+            return
+            
+        browser, context = login_result
+        
+        try:
+            today = date.today().strftime("%Y-%m-%d")  # Format date as YYYY-MM-DD
+            
+            # Create the output file path
+            output_file = f"panic_index_athlete_participation-{today}.csv"
+            fieldnames = ['Meet Name', 'Meet Date', 'Registration Status', 'Athlete School', 'Athlete Name', 'Gender', 'Event Name']
+            
+            # Create a 'results' directory if it doesn't exist
+            os.makedirs('results', exist_ok=True)
+            output_path = os.path.join('results', output_file)
+            
+            # Create the CSV file with headers
+            with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+            
+            print(f"Created new panic index athlete participation file: {output_path}")
+            
+            # Process each meet in the panic index
+            for meet_name, meet_url in PANIC_INDEX_MEETS.items():
+                print(f"Processing meet: {meet_name}")
+                
+                # Get the main meet page to extract date and registration status
+                main_content = navigate_to_page_and_get_content(context, meet_url)
+                
+                if not main_content:
+                    print(f"Failed to get content for {meet_url}")
+                    continue
+                
+                # Parse the main page
+                main_soup = BeautifulSoup(main_content, 'html.parser')
+                
+                # Extract meet date
+                meet_date = ""
+                date_elem = main_soup.select_one('div.basicInfo div.date time')
+                if date_elem:
+                    meet_date = date_elem.text.strip()
+                
+                # Extract registration status
+                registration_status = "Closed"  # Default
+                countdown_div = main_soup.select_one('div.basicInfo div.countDown')
+                if countdown_div and countdown_div.get_text(strip=True):
+                    registration_status = "Open"
+                
+                print(f"Meet Date: {meet_date}, Registration Status: {registration_status}")
+                
+                # Construct entries URL
+                entries_url = f"{meet_url}/entries"
+                
+                # Get the entries page
+                entries_content = navigate_to_page_and_get_content(context, entries_url)
+                
+                if not entries_content:
+                    print(f"Failed to get content for {entries_url}")
+                    continue
+                
+                # Parse the entries page
+                entries_soup = BeautifulSoup(entries_content, 'html.parser')
+                
+                # Find the results section
+                results_section = entries_soup.select_one('section#results')
+                
+                if not results_section:
+                    print(f"No results section found for {meet_name}")
+                    continue
+                
+                # Find all tables in the results section
+                tables = results_section.select('table')
+                
+                if not tables:
+                    print(f"No tables found for {meet_name}")
+                    continue
+                
+                print(f"Found {len(tables)} tables")
+                
+                # Process each table
+                for table in tables:
+                    # Find the previous heading to get the event name
+                    event_heading = table.find_previous(['h2', 'h3', 'h4'])
+                    
+                    if not event_heading:
+                        print("Could not find event heading for a table")
+                        continue
+                    
+                    full_event_name = event_heading.text.strip()
+                    print(f"Processing event: {full_event_name}")
+                    
+                    # Determine gender from event name
+                    gender = ""
+                    if "Boys" in full_event_name or "Men" in full_event_name:
+                        gender = "Boys"
+                    elif "Girls" in full_event_name or "Women" in full_event_name:
+                        gender = "Girls"
+                    else:
+                        print(f"Could not determine gender from event name: {full_event_name}")
+                        continue
+                    
+                    # Extract short event name
+                    event_name = full_event_name
+                    for prefix in ["HS Boys ", "HS Girls ", "Boys ", "Girls ", "Men's ", "Women's "]:
+                        event_name = event_name.replace(prefix, "")
+                    
+                    # Convert long form event name to short form
+                    short_event_name = event_name
+                    for short_name, event_info in EVENT_TYPES.items():
+                        if event_info["long_name"].replace(" Finals", "") in event_name:
+                            short_event_name = short_name
+                            break
+                    
+                    # Find all rows in the table
+                    rows = table.select('tbody tr')
+                    
+                    print(f"Found {len(rows)} athletes in {full_event_name}")
+                    
+                    # Process each row
+                    for row in rows:
+                        # Extract athlete name
+                        athlete_td = row.select_one('td:nth-child(1)')
+                        if not athlete_td or not athlete_td.select_one('a'):
+                            continue
+                            
+                        athlete_name = athlete_td.select_one('a').text.strip()
+                        
+                        # Extract school name
+                        school_td = row.select_one('td:nth-child(3)')
+                        if not school_td or not school_td.select_one('a'):
+                            continue
+                            
+                        school_name = school_td.select_one('a').text.strip()
+                        
+                        # Write to CSV
+                        with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
+                            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                            writer.writerow({
+                                'Meet Name': meet_name,
+                                'Meet Date': meet_date,
+                                'Registration Status': registration_status,
+                                'Athlete School': school_name,
+                                'Athlete Name': athlete_name,
+                                'Gender': gender,
+                                'Event Name': short_event_name
+                            })
+                
+                # Respect rate limits
+                time.sleep(0.1)  # Wait 100ms between meets to avoid ban
+            
+            print(f"Completed panic index athlete participation scan. Results written to {output_path}")
+        
+        finally:
+            browser.close()
+
+def get_panic_index_state_ranks(username, password, year, league):
+    """Get state rankings for panic index events (ranks 10-50 from first page only)."""
+    print("Getting panic index state rankings data...")
+    
+    with sync_playwright() as playwright:
+        # Login with Playwright
+        login_result = login_with_playwright(playwright, username, password)
+        if not login_result:
+            print("Failed to login for panic index state rankings")
+            return
+            
+        browser, context = login_result
+        
+        try:
+            today = date.today().strftime("%Y-%m-%d")  # Format date as YYYY-MM-DD
+            
+            # Create the output file path
+            output_file = f"panic_index_state_ranks-{today}.csv"
+            fieldnames = ['School Name', 'Athlete Name', 'Event', 'Gender', 'Rank']
+            
+            # Create a 'results' directory if it doesn't exist
+            os.makedirs('results', exist_ok=True)
+            output_path = os.path.join('results', output_file)
+            
+            # Create the CSV file with headers
+            with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+            
+            print(f"Created new panic index state rankings file: {output_path}")
+            
+            # Process each event in the panic index
+            for event_str in PANIC_INDEX_EVENTS:
+                parts = event_str.split()
+                gender = parts[0]  # "Boys" or "Girls"
+                event_code = parts[1]  # The event code like "LJ", "D", etc.
+                
+                print(f"Processing {event_str}")
+                
+                # Convert gender to lowercase for URL
+                gender_lower = gender.lower()
+                
+                # Construct the URL
+                url = f"https://co.milesplit.com/rankings/events/high-school-{gender_lower}/outdoor-track-and-field/{event_code}?year={year}&accuracy=fat&league={league}"
+                
+                print(f"URL: {url}")
+                
+                # Get the page content
+                content = navigate_to_page_and_get_content(context, url)
+                
+                if not content:
+                    print(f"Failed to get content for {url}")
+                    continue
+                
+                # Parse the page
+                soup = BeautifulSoup(content, 'html.parser')
+                
+                # Find the data div
+                data_div = soup.select_one('div.data')
+                
+                if not data_div:
+                    print(f"No data div found for {event_str}")
+                    continue
+                
+                # Find all rows in the tbody
+                rows = data_div.select('tbody tr')
+                
+                if not rows:
+                    print(f"No rows found for {event_str}")
+                    continue
+                
+                print(f"Found {len(rows)} rows")
+                
+                # Get the event long name for output
+                event_long_name = EVENT_TYPES[event_code]["long_name"]
+                
+                # Process each row (only ranks 10-50)
+                for row in rows:
+                    rank_td = row.select_one('td.rank')
+                    if not rank_td:
+                        continue
+                    
+                    try:
+                        rank = int(rank_td.text.strip())
+                    except (ValueError, TypeError):
+                        continue  # Skip if rank is not a valid integer
+                    
+                    # Only include ranks 10-50
+                    if rank < 10:
+                        continue
+                    
+                    # Extract school name
+                    team_div = row.select_one('td.name div.team')
+                    if not team_div:
+                        continue
+                        
+                    school_name = team_div.text.strip()
+                    
+                    # Extract athlete name
+                    athlete_div = row.select_one('td.name div.athlete')
+                    
+                    if athlete_div and athlete_div.select_one('a'):
+                        athlete_name = athlete_div.select_one('a').text.strip()
+                    elif athlete_div:
+                        athlete_name = athlete_div.text.strip()
+                    else:
+                        # This is likely a relay, use school name
+                        athlete_name = f"{school_name} Relay"
+                    
+                    # Write to CSV
+                    with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
+                        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        writer.writerow({
+                            'School Name': school_name,
+                            'Athlete Name': athlete_name,
+                            'Event': event_long_name,
+                            'Gender': gender,
+                            'Rank': str(rank)
+                        })
+                
+                # Respect rate limits
+                time.sleep(0.1)  # Wait 100ms between events to avoid ban
+            
+            print(f"Completed panic index state rankings scan. Results written to {output_path}")
+        
+        finally:
+            browser.close()
+
 def main():
     """Main function to parse command-line arguments and run the script."""
     parser = argparse.ArgumentParser(description='Scrape MileSplit event results or state rankings.')
@@ -675,6 +999,7 @@ def main():
     # Define the command-line arguments
     parser.add_argument('--event', type=str, help='URL of the MileSplit event to scrape')
     parser.add_argument('--stateranks', action='store_true', help='Scrape state rankings data')
+    parser.add_argument('--panicindex', action='store_true', help='Generate panic index data')
     
     # Parse the arguments
     args = parser.parse_args()
@@ -731,6 +1056,12 @@ def main():
         # Process state rankings
         results = get_state_ranks(target_school, username, password, year, league)
         # The function itself writes to CSV
+    
+    elif args.panicindex:
+        # Process panic index data
+        print("Processing panic index data...")
+        get_panic_index_athlete_participation(username, password, year, league)
+        get_panic_index_state_ranks(username, password, year, league)
     
     else:
         # No valid arguments provided, print help
