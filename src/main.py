@@ -11,10 +11,12 @@ import time
 from datetime import date
 
 #TODOS:
-# 
+# - add "date pulled" to the State Meet Mark Requirements CSV - FIXED
+# - remove "Finals" from event names when getting the data (before it get's to CSV)
+# - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
 
 # EXPERIMENT BEING RUN
-# 
+# - test running with a sleep=.1 and not .25
 
 # Define the tracked `Panic Index` track meets
 PANIC_INDEX_MEETS = {
@@ -657,7 +659,7 @@ def get_state_ranks(target_school, username, password, year, league):
                             
                             # Add result to the list
                             result = {
-                                'Event': event_long_name,
+                                'Event': event_short,  # Use short form name instead of long form
                                 'Gender': gender_proper,
                                 'Athlete': athlete_name,
                                 'Mark': mark,
@@ -790,42 +792,99 @@ def get_panic_index_athlete_participation(username, password, year, league):
                 
                 # Process each table
                 for table in tables:
-                    # Find the previous heading to get the event name
-                    event_heading = table.find_previous(['h2', 'h3', 'h4'])
+                    # Get event name directly from table data-event attribute
+                    event_name_full = table.get('data-event', '')
                     
-                    if not event_heading:
-                        print("Could not find event heading for a table")
-                        continue
+                    if not event_name_full:
+                        # Fallback to H3 in the table header if data-event is not available
+                        event_header = table.select_one('thead tr th h3')
+                        if event_header:
+                            event_name_full = event_header.text.split('<span')[0].strip()
+                        else:
+                            print("Could not find event name for a table")
+                            continue
                     
-                    full_event_name = event_heading.text.strip()
-                    print(f"Processing event: {full_event_name}")
+                    print(f"Processing event: {event_name_full}")
                     
                     # Determine gender from event name
                     gender = ""
-                    if "Boys" in full_event_name or "Men" in full_event_name:
+                    if "Boys" in event_name_full or "Men" in event_name_full:
                         gender = "Boys"
-                    elif "Girls" in full_event_name or "Women" in full_event_name:
+                    elif "Girls" in event_name_full or "Women" in event_name_full:
                         gender = "Girls"
                     else:
-                        print(f"Could not determine gender from event name: {full_event_name}")
+                        print(f"Could not determine gender from event name: {event_name_full}")
                         continue
                     
                     # Extract short event name
-                    event_name = full_event_name
+                    event_name = event_name_full
                     for prefix in ["HS Boys ", "HS Girls ", "Boys ", "Girls ", "Men's ", "Women's "]:
                         event_name = event_name.replace(prefix, "")
                     
-                    # Convert long form event name to short form
-                    short_event_name = event_name
+                    # Find corresponding short name for the event
+                    short_event_name = None
                     for short_name, event_info in EVENT_TYPES.items():
-                        if event_info["long_name"].replace(" Finals", "") in event_name:
+                        # Check if the long name is in the event name
+                        long_name = event_info["long_name"].replace(" Finals", "")
+                        if long_name in event_name or event_name in long_name:
                             short_event_name = short_name
                             break
+                    
+                    if not short_event_name:
+                        # Try additional parsing for common event names
+                        if "100 Meter" in event_name and "Hurdle" not in event_name:
+                            short_event_name = "100m"
+                        elif "200 Meter" in event_name:
+                            short_event_name = "200m"
+                        elif "400 Meter" in event_name and "Relay" not in event_name:
+                            short_event_name = "400m"
+                        elif "800 Meter" in event_name:
+                            short_event_name = "800m"
+                        elif "1600 Meter" in event_name:
+                            short_event_name = "1600m"
+                        elif "3200 Meter" in event_name:
+                            short_event_name = "3200m"
+                        elif "Discus" in event_name:
+                            short_event_name = "D"
+                        elif "Shot Put" in event_name:
+                            short_event_name = "S"
+                        elif "High Jump" in event_name:
+                            short_event_name = "HJ"
+                        elif "Long Jump" in event_name:
+                            short_event_name = "LJ"
+                        elif "Triple Jump" in event_name:
+                            short_event_name = "TJ"
+                        elif "Pole Vault" in event_name:
+                            short_event_name = "PV"
+                        elif "4x100" in event_name:
+                            short_event_name = "4x100m"
+                        elif "4x200" in event_name:
+                            short_event_name = "4x200m"
+                        elif "4x400" in event_name:
+                            short_event_name = "4x400m"
+                        elif "4x800" in event_name:
+                            short_event_name = "4x800m"
+                        elif "110 Meter Hurdle" in event_name:
+                            short_event_name = "110H"
+                        elif "100 Meter Hurdle" in event_name:
+                            short_event_name = "100H"
+                        elif "300 Meter Hurdle" in event_name:
+                            short_event_name = "300H"
+                    
+                    if not short_event_name:
+                        print(f"Could not determine short event name for: {event_name}")
+                        continue
+                    
+                    # Check if this event is in our PANIC_INDEX_EVENTS list
+                    event_key = f"{gender} {short_event_name}"
+                    if event_key not in PANIC_INDEX_EVENTS:
+                        print(f"Skipping event {event_key} - not in PANIC_INDEX_EVENTS")
+                        continue
                     
                     # Find all rows in the table
                     rows = table.select('tbody tr')
                     
-                    print(f"Found {len(rows)} athletes in {full_event_name}")
+                    print(f"Found {len(rows)} athletes in {event_name_full}")
                     
                     # Process each row
                     for row in rows:
@@ -835,6 +894,9 @@ def get_panic_index_athlete_participation(username, password, year, league):
                             continue
                             
                         athlete_name = athlete_td.select_one('a').text.strip()
+                        first_name = athlete_name.split(",")[1]
+                        last_name = athlete_name.split(",")[0]
+                        athlete_name = f"{first_name.strip()} {last_name.strip()}"
                         
                         # Extract school name
                         school_td = row.select_one('td:nth-child(3)')
@@ -937,9 +999,6 @@ def get_panic_index_state_ranks(username, password, year, league):
                 
                 print(f"Found {len(rows)} rows")
                 
-                # Get the event long name for output
-                event_long_name = EVENT_TYPES[event_code]["long_name"]
-                
                 # Process each row (only ranks 10-50)
                 for row in rows:
                     rank_td = row.select_one('td.rank')
@@ -979,7 +1038,7 @@ def get_panic_index_state_ranks(username, password, year, league):
                         writer.writerow({
                             'School Name': school_name,
                             'Athlete Name': athlete_name,
-                            'Event': event_long_name,
+                            'Event': event_code,  # Use short form event name
                             'Gender': gender,
                             'Rank': str(rank)
                         })
