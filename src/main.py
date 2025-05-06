@@ -36,19 +36,25 @@ PANIC_INDEX_MEETS = {
 }
 
 PANIC_INDEX_EVENTS = [
-    "Girls LJ",
-    "Girls TJ",
     "Girls D",
     "Girls S",
+    "Girls LJ",
+    "Girls TJ",
     "Girls PV",
+    "Girls 800m",
     "Girls 4x200m",
+    "Girls 4x800m",
     "Boys D",
     "Boys LJ",
     "Boys PV",
     "Boys 200m",
     "Boys 400m",
+    "Boys 800m",
+    "Boys 1600m",
+    "Boys 3200m",
     "Boys 4x200m",
     "Boys 4x400m",
+    "Boys 4x800m",
 ]
 
 # Define the event types structure with dictionary for long names
