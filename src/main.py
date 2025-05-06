@@ -1039,6 +1039,9 @@ def get_panic_index_state_ranks(username, password, year, league):
                         
                         if athlete_div and athlete_div.select_one('a'):
                             athlete_name = athlete_div.select_one('a').text.strip()
+                            first_name = athlete_name.split(",")[1] if athlete_name else ""
+                            last_name = athlete_name.split(",")[0] if athlete_name else ""
+                            athlete_name = f"{first_name.strip()} {last_name.strip()}" if first_name and last_name else athlete_name
                         elif athlete_div:
                             athlete_name = athlete_div.text.strip()
                         else:
