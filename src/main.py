@@ -11,20 +11,18 @@ import time
 from datetime import date
 
 #TODOS:
-# - add "date pulled" to the State Meet Mark Requirements CSV - FIXED
-# - remove "Finals" from event names when getting the data (before it get's to CSV)
-# - add a "--debug" flag to save screenshots and HTML for debugging purposes, and not have this be default behavior
+# 
 
 # EXPERIMENT BEING RUN
-# - test running with a sleep=.1 and not .25
+# 
 
 # Define the tracked `Panic Index` track meets
 PANIC_INDEX_MEETS = {
-    "Cardinal Inivtational" : "https://co.milesplit.com/meets/652527-cardinal-invitational-2025",
+    "Cardinal Invitational" : "https://co.milesplit.com/meets/652527-cardinal-invitational-2025",
     "Strasburg Dave Spiller" : "https://co.milesplit.com/meets/654034-strasburg-dave-spiller-invitational-postponed-to-may-5-2025",
     "Centauri Invitational 2025" : "https://co.milesplit.com/meets/654392-centauri-invitational-canceled-2025",
     "Spartan Last Chance Qualifier" : "https://co.milesplit.com/meets/636625-spartan-last-chance-qualifier-2025",
-    "Delta Twighlight 2025" : "https://co.milesplit.com/meets/660142-delta-twilight-2025",
+    "Delta Twilight 2025" : "https://co.milesplit.com/meets/660142-delta-twilight-2025",
     "Monte Vista Last Chance" : "https://co.milesplit.com/meets/652252-2025-monte-vista-last-chance-invitational-2025",
     "Friday Night Lights" : "https://co.milesplit.com/meets/636094-friday-night-lights-2025",
     "Hoka St Vrain" : "https://co.milesplit.com/meets/651208-hoka-st-vrain-invitational-2025",
@@ -890,14 +888,22 @@ def get_panic_index_athlete_participation(username, password, year, league):
                     for row in rows:
                         # Extract athlete name
                         athlete_td = row.select_one('td:nth-child(1)')
-                        if not athlete_td or not athlete_td.select_one('a'):
+                        if not athlete_td:
+                            continue
+                        
+                        # For relay events or if no anchor tag, take text directly from td
+                        if "4x" in short_event_name or not athlete_td.select_one('a'):
+                            athlete_name = athlete_td.text.strip()
+                            # Default to "Relay Team A" if it's a relay event
+                            if not athlete_name and "4x" in short_event_name:
+                                athlete_name = "Relay Team A"
+                        else:
+                            athlete_name = athlete_td.select_one('a').text.strip()
+                        
+                        # Skip if no athlete name is found
+                        if not athlete_name:
                             continue
                             
-                        athlete_name = athlete_td.select_one('a').text.strip()
-                        first_name = athlete_name.split(",")[1]
-                        last_name = athlete_name.split(",")[0]
-                        athlete_name = f"{first_name.strip()} {last_name.strip()}"
-                        
                         # Extract school name
                         school_td = row.select_one('td:nth-child(3)')
                         if not school_td or not school_td.select_one('a'):
@@ -919,7 +925,7 @@ def get_panic_index_athlete_participation(username, password, year, league):
                             })
                 
                 # Respect rate limits
-                time.sleep(0.1)  # Wait 100ms between meets to avoid ban
+                time.sleep(0.2)  # Wait 100ms between meets to avoid ban
             
             print(f"Completed panic index athlete participation scan. Results written to {output_path}")
         
@@ -999,6 +1005,9 @@ def get_panic_index_state_ranks(username, password, year, league):
                 
                 print(f"Found {len(rows)} rows")
                 
+                # Check if this is a relay event
+                is_relay = event_code.startswith('4x')
+                
                 # Process each row (only ranks 10-50)
                 for row in rows:
                     rank_td = row.select_one('td.rank')
@@ -1022,15 +1031,19 @@ def get_panic_index_state_ranks(username, password, year, league):
                     school_name = team_div.text.strip()
                     
                     # Extract athlete name
-                    athlete_div = row.select_one('td.name div.athlete')
-                    
-                    if athlete_div and athlete_div.select_one('a'):
-                        athlete_name = athlete_div.select_one('a').text.strip()
-                    elif athlete_div:
-                        athlete_name = athlete_div.text.strip()
+                    if is_relay:
+                        # For relay events, use "Relay Team A"
+                        athlete_name = "Relay Team A"
                     else:
-                        # This is likely a relay, use school name
-                        athlete_name = f"{school_name} Relay"
+                        athlete_div = row.select_one('td.name div.athlete')
+                        
+                        if athlete_div and athlete_div.select_one('a'):
+                            athlete_name = athlete_div.select_one('a').text.strip()
+                        elif athlete_div:
+                            athlete_name = athlete_div.text.strip()
+                        else:
+                            # Fallback for other cases
+                            athlete_name = "Unknown Athlete"
                     
                     # Write to CSV
                     with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
@@ -1044,7 +1057,7 @@ def get_panic_index_state_ranks(username, password, year, league):
                         })
                 
                 # Respect rate limits
-                time.sleep(0.1)  # Wait 100ms between events to avoid ban
+                time.sleep(0.2)  # Wait 100ms between events to avoid ban
             
             print(f"Completed panic index state rankings scan. Results written to {output_path}")
         
@@ -1059,6 +1072,7 @@ def main():
     parser.add_argument('--event', type=str, help='URL of the MileSplit event to scrape')
     parser.add_argument('--stateranks', action='store_true', help='Scrape state rankings data')
     parser.add_argument('--panicindex', action='store_true', help='Generate panic index data')
+    parser.add_argument('--panicindexranks', action='store_true', help='Generate panic index data')
     
     # Parse the arguments
     args = parser.parse_args()
@@ -1120,6 +1134,11 @@ def main():
         # Process panic index data
         print("Processing panic index data...")
         get_panic_index_athlete_participation(username, password, year, league)
+        get_panic_index_state_ranks(username, password, year, league)
+    
+    elif args.panicindexranks:
+        # Process panic index state rankings
+        print("Processing panic index state rankings data...")
         get_panic_index_state_ranks(username, password, year, league)
     
     else:
